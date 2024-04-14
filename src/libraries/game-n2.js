@@ -6,7 +6,7 @@ const ZumaConfigDifficulty_1 = {
         "#0c7526",
         "#093799"
     ],
-    moveSpeed: 15,
+    moveSpeed: 8,
     countMarbles: 100,
     initMarbles: 7,
 };
@@ -17,9 +17,9 @@ const ZumaConfigDifficulty_2 = {
         "#093799",
         "#bfb60a",
     ],
-    moveSpeed: 8,
-    countMarbles: 150,
-    initMarbles: 15,
+    moveSpeed: 4,
+    countMarbles: 130,
+    initMarbles: 14,
 };
 const ZumaConfigDifficulty_3 = {
     colorList: [
@@ -29,14 +29,14 @@ const ZumaConfigDifficulty_3 = {
         "#ABD8CE",
         "#E4C5AF"
     ],
-    moveSpeed: 5,
-    countMarbles: 225,
-    initMarbles: 22,
+    moveSpeed: 4,
+    countMarbles: 160,
+    initMarbles: 21,
 };
 
 let ZumaConfig = JSON.parse( JSON.stringify(ZumaConfigDifficulty_2) );
+const OneFrameTime = 17;
 
-const OneFrameTime = 10;
 const createDiv = (classList, children = []) => {
     const div = document.createElement("div");
     div.classList.add(...classList);
@@ -311,11 +311,12 @@ class Zuma {
         return this;
     }
     moveMoveMarbleData() {
+        const percent = 0.99;
         const firstMarble = this.marbleDataList[0];
         if (!firstMarble) {
             return;
         }
-        if (firstMarble.percent >= 0.99) {
+        if (firstMarble.percent >= percent) {
             this.score -= 1;
             this.removeMarbleFromDataList(firstMarble.marble);
         }
@@ -327,14 +328,13 @@ class Zuma {
         const deleteList = [];
         for (let i = 1; i < this.marbleDataList.length; i++) {
             const marbleData = this.marbleDataList[i];
-            if (marbleData.percent >= 0.99) {
+            if (marbleData.percent >= percent) {
                 this.score -= 1;
                 this.removeMarbleFromDataList(marbleData.marble, i);
                 continue;
             }
             const overlap = prevMarble.marble.overlap(marbleData.marble);
             if (overlap > 0 || prevMarble.percent > marbleData.percent) {
-                // 檢查退回後修不需要刪除
                 if (this.checkDeleteAfterTouchData[marbleData.marble.ID]) {
                     delete this.checkDeleteAfterTouchData[marbleData.marble.ID];
                     if (marbleData.marble.Color === prevMarble.marble.Color) {
@@ -371,7 +371,6 @@ class Zuma {
         if (!this.marbleBoomList.length) {
             return;
         }
-        // TODO: 有空優化成分區檢測
         const marbleDataList = this.marbleDataList;
         const deleteData = [];
         this.marbleBoomList.forEach((data) => {
@@ -494,6 +493,8 @@ class Zuma {
         return neerList;
     }
     animation() {
+        const my_start = +Date.now();
+        console.log('my_start:', my_start);
         if (!this.isStart) {
             return;
         }
@@ -518,6 +519,7 @@ class Zuma {
         if (this.marbleDataList.length === 0) {
             this.isFinal = true;
         }
+        console.log('my_exec:', +Date.now() - my_start);
     }
     bindEvent() {
         const mousemove = (e) => {

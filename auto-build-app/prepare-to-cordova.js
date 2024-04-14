@@ -36,7 +36,7 @@ function PrepareCss() {
     const files = fs.readdirSync(path);
     for (const file of files) {
         let data = fs.readFileSync(path+file, 'utf-8');
-        data = data.replaceAll('url(/', 'url(');
+        data = data.replaceAll('url(/', 'url(../');
         fs.writeFileSync(path+file, data, 'utf-8');
     }
 }

@@ -28,7 +28,7 @@
         <div class="button-container">
           <div id="continue-btn" class="button mb-15">Продолжить</div>
           <div id="reset-btn" class="button mb-15 button-secondary">Заново</div>
-          <div id="donat-btn" class="button button-secondary">Донат разрабу</div>
+          <div id="donat-btn" style="display: none;" class="button button-secondary">Донат разрабу</div>
         </div>
       </div>
       <div id="donat" class="popup">
