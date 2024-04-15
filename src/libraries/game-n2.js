@@ -8,7 +8,7 @@ const ZumaConfigDifficulty_1 = {
     ],
     moveSpeed: 8,
     countMarbles: 100,
-    initMarbles: 7,
+    initMarbles: 5,
 };
 const ZumaConfigDifficulty_2 = {
     colorList: [
@@ -17,9 +17,9 @@ const ZumaConfigDifficulty_2 = {
         "#093799",
         "#bfb60a",
     ],
-    moveSpeed: 4,
-    countMarbles: 130,
-    initMarbles: 14,
+    moveSpeed: 8,
+    countMarbles: 150,
+    initMarbles: 10,
 };
 const ZumaConfigDifficulty_3 = {
     colorList: [
@@ -29,13 +29,13 @@ const ZumaConfigDifficulty_3 = {
         "#ABD8CE",
         "#E4C5AF"
     ],
-    moveSpeed: 4,
-    countMarbles: 160,
-    initMarbles: 21,
+    moveSpeed: 8,
+    countMarbles: 200,
+    initMarbles: 20,
 };
 
 let ZumaConfig = JSON.parse( JSON.stringify(ZumaConfigDifficulty_2) );
-const OneFrameTime = 17;
+const OneFrameTime = 15;
 
 const createDiv = (classList, children = []) => {
     const div = document.createElement("div");
@@ -493,12 +493,17 @@ class Zuma {
         return neerList;
     }
     animation() {
+        if (this.isAlreadyRun) {
+            return;
+        }
+
         const my_start = +Date.now();
-        console.log('my_start:', my_start);
+
         if (!this.isStart) {
             return;
         }
-        requestAnimationFrame(() => this.animation());
+        setTimeout(() => this.animation(), 10);
+        // requestAnimationFrame(() => this.animation());
         if (!this.isInit) {
             this.init().moveMoveMarbleData();
             return;
@@ -507,6 +512,8 @@ class Zuma {
         if (innerTime - this.time < OneFrameTime) {
             return;
         }
+        // console.log('my_start:', my_start);
+        this.isAlreadyRun = true;
         this.time = innerTime;
         if (this.moveTimes === this.moveSpeed &&
             this.autoAddMarbleCount < this.AllMarbleLength) {
@@ -519,7 +526,8 @@ class Zuma {
         if (this.marbleDataList.length === 0) {
             this.isFinal = true;
         }
-        console.log('my_exec:', +Date.now() - my_start);
+        // console.log('my_exec:', +Date.now() - my_start);
+        this.isAlreadyRun = false;
     }
     bindEvent() {
         const mousemove = (e) => {
