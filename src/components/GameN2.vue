@@ -59,6 +59,7 @@
       <div class="mask"></div>
     </div>
     <div id="game-n-2-like-body"></div>
+    <div style="background: #000; color: #FFF; position: fixed; bottom: 0; left: 0; width: 100%; padding: 15px; font-size: 12px; text-align: left; height: 100px;" id="my-console"></div>
     <!-- /Game -->
   </div>
 </template>
@@ -88,6 +89,7 @@ body {
   rotate: 90deg;
   scale: 0.66;
   margin-top: 0 !important;
+  height: fit-content;
 }
 
 #game-n-2 {
@@ -341,7 +343,8 @@ body {
     height: 100%;
     background-image: url("@/assets/images/noise.png");
     position: absolute;
-    opacity: 0.15;
+    display: none;
+    //opacity: 0.15;
   }
 
   .score {

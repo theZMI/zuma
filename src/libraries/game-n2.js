@@ -1,16 +1,16 @@
 "use strict";
 
-const ZumaConfigDifficulty_1 = {
+const ZumaConfig_1 = {
     colorList: [
         "#ab092c",
         "#0c7526",
         "#093799"
     ],
-    moveSpeed: 8,
-    countMarbles: 100,
-    initMarbles: 5,
+    moveSpeed: 4,
+    countMarbles: 999,
+    initMarbles: 7,
 };
-const ZumaConfigDifficulty_2 = {
+const ZumaConfig_2 = {
     colorList: [
         "#ab092c",
         "#0c7526",
@@ -18,10 +18,10 @@ const ZumaConfigDifficulty_2 = {
         "#bfb60a",
     ],
     moveSpeed: 8,
-    countMarbles: 150,
+    countMarbles: 999,
     initMarbles: 10,
 };
-const ZumaConfigDifficulty_3 = {
+const ZumaConfig_3 = {
     colorList: [
         "#0C3406",
         "#077187",
@@ -31,11 +31,60 @@ const ZumaConfigDifficulty_3 = {
     ],
     moveSpeed: 8,
     countMarbles: 200,
-    initMarbles: 20,
+    initMarbles: 56,//20,
 };
+let ZumaConfig = JSON.parse(JSON.stringify(ZumaConfig_1));
+const ONE_FRAME_TIME = 10;
+const PAUSE_ON_ESC = false;
 
-let ZumaConfig = JSON.parse( JSON.stringify(ZumaConfigDifficulty_2) );
-const OneFrameTime = 15;
+class FastMath {
+    _cache = [];
+
+    constructor() {
+        this._cache = {
+            sin: {},
+            cos: {},
+            atan2: {},
+            abs: {},
+            sqrt: {}
+        };
+    }
+    getFromCache(func, v) {
+        if (!this._cache[func][v]) {
+            this._cache[func][v] = Math[func](v);
+        }
+        return this._cache[func][v];
+    }
+
+    sin(v) {
+        v = parseInt(v*100)/100;
+        return this.getFromCache('sin', v);
+    }
+    cos(v) {
+        v = parseInt(v*100)/100;
+        return this.getFromCache('cos', v);
+    }
+    atan2(y, x) {
+        x = parseInt(x*100)/100;
+        y = parseInt(y*100)/100;
+        const func = 'atan2';
+        const v = y + '_' + x;
+        if (!this._cache[func][v]) {
+            this._cache[func][v] = Math.atan2(y, x);
+        }
+        return this._cache[func][v];
+    }
+    abs(v) {
+        v = parseInt(v);
+        return this.getFromCache('abs', v);
+    }
+    sqrt(v) {
+        v = parseInt(v);
+        return this.getFromCache('sqrt', v);
+    }
+}
+const fastMath = new FastMath();
+const domActions = [];
 
 const createDiv = (classList, children = []) => {
     const div = document.createElement("div");
@@ -53,30 +102,40 @@ const createElementNS = (name, attr) => {
     });
     return elementNS;
 };
+
 class Marble {
-    constructor({ color = `#ff2244` }) {
-        this.ID = `${(~~(Math.random() * 1000000000))
-            .toString(16)
-            .toLocaleUpperCase()}`;
+    constructor({color = `#ff2244`}) {
+        this.ID = `${(~~(Math.random() * 1e9)).toString(16).toLocaleUpperCase()}`;
         this.DOM = createDiv(["marble"]);
         this.Color = color;
         this.DOM.style.backgroundColor = this.Color;
         this.DOM.style.width = `${Marble.Size}px`;
         this.DOM.style.height = `${Marble.Size}px`;
     }
+
     setPosition(x, y) {
-        this.x = x;
-        this.y = y;
+        this.x = parseInt(x * 100)/100;
+        this.y = parseInt(y * 100)/100;
         if (this.DOM) {
-            this.DOM.style.transform = `translate(calc(${this.x}px - 50%), calc(${this.y}px - 50%))`;
+            const func = () => {
+                this.DOM.style.transform = `translate(calc(${this.x}px - 50%), calc(${this.y}px - 50%))`;
+            };
+            if (zumaGame.isAlreadyRun) {
+                domActions.push(func);
+            } else {
+                func();
+            }
+
         }
         return this;
     }
+
     appendTo(parent) {
         this.parent = parent;
         parent.appendChild(this.DOM);
         return this;
     }
+
     remove() {
         if (!this.parent) {
             return this;
@@ -85,14 +144,16 @@ class Marble {
         this.parent = null;
         return this;
     }
+
     overlap(marble) {
-        let r = Marble.Size - Math.sqrt((this.x - marble.x) ** 2 + (this.y - marble.y) ** 2);
-        return r;
+        return Marble.Size - fastMath.sqrt((this.x - marble.x) ** 2 + (this.y - marble.y) ** 2);
     }
 }
+
 Marble.Size = 60;
+
 class Player {
-    constructor({ x = 0, y = 0 }) {
+    constructor({x = 0, y = 0}) {
         this.Marble = createDiv(["marble-1"]);
         this.NextMarbleList = [
             createDiv(["marble-2"]),
@@ -104,6 +165,7 @@ class Player {
         this.Y = y;
         this.DOM.style.transform = `translate(calc(${this.X}px - 50%), calc(${this.Y}px - 50%)) rotate(0deg)`;
     }
+
     lookAt(x, y) {
         if (!this.parent) {
             return this;
@@ -113,33 +175,38 @@ class Player {
         const rect = this.DOM.getBoundingClientRect();
         const innerX = rect.left + (rect.right - rect.left) / 2;
         const innerY = rect.top + (rect.bottom - rect.top) / 2;
-        this.rotate = (Math.atan2(this.lookY - innerY, this.lookX - innerX) * 180) / Math.PI + 90 - 90; // CSS FIX
+        this.rotate = (fastMath.atan2(this.lookY - innerY, this.lookX - innerX) * 180) / Math.PI + 90 - 90; // CSS FIX
         this.DOM.style.transform = `translate(calc(${this.X}px - 50%), calc(${this.Y}px - 50%)) rotate(${this.rotate}deg)`;
         return this;
     }
+
     appendTo(parent) {
         this.parent = parent;
         this.parent.appendChild(this.DOM);
         return this;
     }
+
     setMarbleColor(color) {
         this.Marble.style.backgroundColor = color;
         return this;
     }
+
     setNextMarbleColor(color) {
-        this.NextMarbleList.forEach((dom) => {
+        this.NextMarbleList.forEach(dom => {
             dom.style.backgroundColor = color;
         });
         return this;
     }
+
     getVector() {
         const innerRotate = this.rotate - 90; // Вторые -90 это из-за rotate в css
         return {
-            x: Math.cos((innerRotate * Math.PI) / 180) * 30,
-            y: Math.sin((innerRotate * Math.PI) / 180) * 30
+            x: fastMath.cos((innerRotate * Math.PI) / 180) * 30,
+            y: fastMath.sin((innerRotate * Math.PI) / 180) * 30
         };
     }
 }
+
 class Zuma {
     myGameInit() {
         this.AllMarbleLength = ZumaConfig.countMarbles;
@@ -153,6 +220,7 @@ class Zuma {
             this.marbleColorCount[color] = 0;
         });
     }
+
     constructor(data) {
         this.Container = createDiv(["container"], [
             createDiv(["leaf", "leaf-01"]),
@@ -166,6 +234,10 @@ class Zuma {
 
         this.autoAddMarbleCount = 0;
         this.marbleDataList = [];
+        // for (let i = 0; i < this.AllMarbleLength; i++) {
+        //     this.marbleDataList.push(null);
+        // }
+
         this.marbleBoomList = [];
         this.marbleColorCount = {};
         this.moveTimes = 0;
@@ -209,27 +281,34 @@ class Zuma {
         this.updateScore = data.updateScore;
         this.updateFinal = data.updateFinal;
     }
+
     get isInit() {
         return this._isInit;
     }
+
     set isFinal(isFinal) {
         this._isFinal = isFinal;
         this.updateFinal && this.updateFinal(this._isFinal);
     }
+
     get isFinal() {
         return this._isFinal;
     }
+
     set score(score) {
         this._score = score;
         this.updateScore && this.updateScore(this._score);
     }
+
     get score() {
         return this._score;
     }
+
     start() {
         this.myGameInit();
         return this.continue();
     }
+
     continue() {
         this.isStart = true;
         this.time = new Date().getTime();
@@ -239,10 +318,12 @@ class Zuma {
         this.animation();
         return this;
     }
+
     stop() {
         this.isStart = false;
         return this;
     }
+
     reset() {
         this.myGameInit();
         this.isStart = false;
@@ -261,6 +342,7 @@ class Zuma {
 
         return this;
     }
+
     destroy() {
         this.reset();
         if (this.parent) {
@@ -271,11 +353,13 @@ class Zuma {
         });
         this.windowEventList = [];
     }
+
     appendTo(parent) {
         this.parent = parent;
         this.parent.appendChild(this.Container);
         return this;
     }
+
     attack() {
         if (!this.Player || !this.playerMarble.now || !this.playerMarble.next) {
             return this;
@@ -292,24 +376,27 @@ class Zuma {
         this.Player.setMarbleColor(this.playerMarble.now.Color).setNextMarbleColor(this.playerMarble.next.Color);
         return this;
     }
+
     init() {
         const innerTime = new Date().getTime();
         if (this.marbleDataList.length >= this.InitMarbleLength && this.isStart) {
             this._isInit = true;
-            this.moveSpeed = ZumaConfig.moveSpeed*5;
+            this.moveSpeed = ZumaConfig.moveSpeed * 5;
             this.moveTimes = this.moveSpeed;
             this.playerMarble.now = this.createMarble();
             this.playerMarble.next = this.createMarble();
             this.Player.setMarbleColor(this.playerMarble.now.Color).setNextMarbleColor(this.playerMarble.next.Color);
+            console.log('this.marbleDataList=', this.marbleDataList);
             return this;
         }
-        if (innerTime - this.time < OneFrameTime * 4) {
+        if (innerTime - this.time < ONE_FRAME_TIME * 5) {
             return this;
         }
         this.time = innerTime;
         this.unshiftMarble();
         return this;
     }
+
     moveMoveMarbleData() {
         const percent = 0.99;
         const firstMarble = this.marbleDataList[0];
@@ -346,12 +433,10 @@ class Zuma {
                 }
                 if (prevMarble.percent > marbleData.percent) {
                     marbleData.percent = prevMarble.percent + Marble.Size / this.PathLength;
-                }
-                else {
+                } else {
                     marbleData.percent += overlap / this.PathLength;
                 }
-            }
-            else if (overlap < -5 && marbleData.percent > prevMarble.percent) {
+            } else if (overlap < -5 && marbleData.percent > prevMarble.percent) {
                 if (overlap < -Marble.Size) {
                     this.checkDeleteAfterTouchData[marbleData.marble.ID] = true;
                 }
@@ -362,11 +447,12 @@ class Zuma {
             marbleData.marble.setPosition(pos.x, pos.y);
             prevMarble = marbleData;
         }
-        deleteList.forEach((marble) => {
+        deleteList.forEach(marble => {
             this.score += 3;
             this.removeMarbleFromDataList(marble);
         });
     }
+
     moveMoveMarbleBoom() {
         if (!this.marbleBoomList.length) {
             return;
@@ -386,21 +472,21 @@ class Zuma {
                             sameList.forEach((marble) => {
                                 this.removeMarbleFromDataList(marble);
                             });
-                            deleteData.push(Object.assign(Object.assign({}, data), { isMove: false }));
+                            deleteData.push(Object.assign(Object.assign({}, data), {isMove: false}));
                             return;
                         }
                     }
                     this.addMarbleToNeer(data.marble, marbleData);
-                    deleteData.push(Object.assign(Object.assign({}, data), { isMove: true }));
+                    deleteData.push(Object.assign(Object.assign({}, data), {isMove: true}));
                     return;
                 }
             }
-            if (Math.abs(data.marble.x) > this.width ||
-                Math.abs(data.marble.y) > this.height) {
-                deleteData.push(Object.assign(Object.assign({}, data), { isMove: false }));
+            if (fastMath.abs(data.marble.x) > this.width ||
+                fastMath.abs(data.marble.y) > this.height) {
+                deleteData.push(Object.assign(Object.assign({}, data), {isMove: false}));
             }
         });
-        deleteData.forEach((date) => {
+        deleteData.forEach(date => {
             const index = this.marbleBoomList.findIndex((d) => d.marble.ID === date.marble.ID);
             this.marbleBoomList.splice(index, 1);
             if (!date.isMove) {
@@ -409,6 +495,7 @@ class Zuma {
             }
         });
     }
+
     removeMarbleFromDataList(marble, index = this.marbleDataList.findIndex((d) => d.marble.ID === marble.ID)) {
         delete this.checkDeleteAfterTouchData[marble.ID];
         this.marbleDataList[index].marble.remove();
@@ -416,6 +503,7 @@ class Zuma {
         this.marbleColorCount[marble.Color]--;
         return this;
     }
+
     addMarbleToNeer(marble, target) {
         const index = this.marbleDataList.findIndex((d) => d.marble.ID === target.marble.ID);
         const prevPos = this.Path.getPointAtLength((target.percent - Marble.Size / this.PathLength) * this.PathLength);
@@ -427,8 +515,7 @@ class Zuma {
                 marble,
                 percent: target.percent - Marble.Size / this.PathLength / 2
             });
-        }
-        else {
+        } else {
             this.marbleDataList.splice(index, 0, {
                 marble,
                 percent: target.percent + Marble.Size / this.PathLength / 2
@@ -436,11 +523,13 @@ class Zuma {
         }
         return this;
     }
+
     createMarble() {
-        const marble = new Marble({ color: this.getColor() });
+        const marble = new Marble({color: this.getColor()});
         this.marbleColorCount[marble.Color]++;
         return marble;
     }
+
     unshiftMarble() {
         const marble = this.createMarble();
         marble.appendTo(this.Container);
@@ -451,6 +540,7 @@ class Zuma {
         this.autoAddMarbleCount++;
         return this;
     }
+
     getColor() {
         const index = ~~(Math.random() * this.colorList.length);
         const color = this.colorList[index];
@@ -462,6 +552,7 @@ class Zuma {
         this.colorList.splice(index, 1);
         return this.getColor();
     }
+
     getNeerSameMarble(marble) {
         let checkMarble;
         const index = this.marbleDataList.findIndex((ele) => ele.marble.ID === marble.ID);
@@ -473,8 +564,7 @@ class Zuma {
                 nowMarble.overlap(checkMarble) > Marble.Size / -10) {
                 checkMarble = nowMarble;
                 neerList.push(nowMarble);
-            }
-            else {
+            } else {
                 break;
             }
         }
@@ -485,14 +575,15 @@ class Zuma {
                 nowMarble.overlap(checkMarble) > Marble.Size / -10) {
                 checkMarble = nowMarble;
                 neerList.push(nowMarble);
-            }
-            else {
+            } else {
                 break;
             }
         }
         return neerList;
     }
+
     animation() {
+        console.log('me call');
         if (this.isAlreadyRun) {
             return;
         }
@@ -502,16 +593,18 @@ class Zuma {
         if (!this.isStart) {
             return;
         }
-        setTimeout(() => this.animation(), 10);
-        // requestAnimationFrame(() => this.animation());
+
+        requestAnimationFrame(() => this.animation());
+
         if (!this.isInit) {
             this.init().moveMoveMarbleData();
             return;
         }
         const innerTime = new Date().getTime();
-        if (innerTime - this.time < OneFrameTime) {
+        if (innerTime - this.time < ONE_FRAME_TIME) {
             return;
         }
+        console.log('MARBLES: ', this.marbleDataList.length);
         // console.log('my_start:', my_start);
         this.isAlreadyRun = true;
         this.time = innerTime;
@@ -521,14 +614,29 @@ class Zuma {
             this.moveTimes = 0;
         }
         this.moveMoveMarbleBoom();
+        const my_part_1 = +Date.now();
         this.moveMoveMarbleData();
+        domActions.forEach(func => {
+            func();
+        });
+        domActions.length = 0;
+        const my_part_2 = +Date.now();
         this.moveTimes++;
         if (this.marbleDataList.length === 0) {
             this.isFinal = true;
         }
         // console.log('my_exec:', +Date.now() - my_start);
+        const my_end = +Date.now();
+        const exec_time = my_end - my_start;
+        const exec_part_1 = my_part_1 - my_start;
+        const exec_part_2 = my_part_2 - my_part_1;
+        const execInfo = '<div style="width: 100px; display: inline-block;">'
+            +`${exec_time} = (${exec_part_1} + ${exec_part_2})`
+            + '</div>';
+        document.getElementById('my-console').innerHTML = execInfo + document.getElementById('my-console').innerHTML;
         this.isAlreadyRun = false;
     }
+
     bindEvent() {
         const mousemove = (e) => {
             if (!this.Player) {
@@ -562,9 +670,15 @@ class Zuma {
         window.addEventListener("mousemove", mousemove);
         window.addEventListener("click", click);
         window.addEventListener("keydown", keydown);
-        this.windowEventList.push({ name: "mousemove", fn: mousemove }, { name: "click", fn: click }, { name: "keydown", fn: keydown });
+        this.windowEventList.push({name: "mousemove", fn: mousemove}, {name: "click", fn: click}, {
+            name: "keydown",
+            fn: keydown
+        });
     }
 }
+
+let zumaGame = null;
+
 export function InitGame2() {
     const mainContainer = document.querySelector("#game-n-2 #game-n-2-like-body");
     const scoreDOM = document.body.querySelector("#game-n-2 #score .num");
@@ -573,14 +687,14 @@ export function InitGame2() {
     const stopPopup = document.body.querySelector("#game-n-2 #stop");
     const finalPopup = document.body.querySelector("#game-n-2 #final");
     const finalNum = finalPopup.querySelector(".num");
-    const zumaGame = new Zuma({
+    zumaGame = new Zuma({
         width: 1200,
         height: 880,
         scale: 0.7,
         path: `M235.5-36.5c0,0-129,157.858-143,381.918c-6.6,105.632,47,236.043,159,295.679s338.566,101.881,547,64.404
     c199-35.781,312.016-164.676,313-266c1-103-34-221.816-200-278.044c-142.542-48.282-346.846-37.455-471,31.044
     c-116,64-154.263,213.533-81,304.619c92,114.381,410,116.381,476,2.891c62.975-108.289-40-203.51-158-206.51`,
-        playerPos: { x: 550, y: 400 },
+        playerPos: {x: 550, y: 400},
         updateScore: (score) => {
             scoreDOM.innerHTML = `${score}`;
         },
@@ -594,17 +708,17 @@ export function InitGame2() {
     });
     zumaGame.appendTo(mainContainer);
     startPopup.querySelector(".button-difficulty-1").addEventListener("click", () => {
-        ZumaConfig = JSON.parse( JSON.stringify(ZumaConfigDifficulty_1) );
+        ZumaConfig = JSON.parse(JSON.stringify(ZumaConfig_1));
         startPopup.classList.remove("active");
         zumaGame.start();
     });
     startPopup.querySelector(".button-difficulty-2").addEventListener("click", () => {
-        ZumaConfig = JSON.parse( JSON.stringify(ZumaConfigDifficulty_2) );
+        ZumaConfig = JSON.parse(JSON.stringify(ZumaConfig_2));
         startPopup.classList.remove("active");
         zumaGame.start();
     });
     startPopup.querySelector(".button-difficulty-3").addEventListener("click", () => {
-        ZumaConfig = JSON.parse( JSON.stringify(ZumaConfigDifficulty_3) );
+        ZumaConfig = JSON.parse(JSON.stringify(ZumaConfig_3));
         startPopup.classList.remove("active");
         zumaGame.start();
     });
@@ -645,10 +759,12 @@ export function InitGame2() {
             stopPopup.classList.add("active");
         }
     });
-    window.addEventListener("blur", function (e) {
-        if (!zumaGame.isFinal && zumaGame.isInit) {
-            zumaGame.stop();
-            stopPopup.classList.add("active");
-        }
-    });
+    if (PAUSE_ON_ESC) {
+        window.addEventListener("blur", function (e) {
+            if (!zumaGame.isFinal && zumaGame.isInit) {
+                zumaGame.stop();
+                stopPopup.classList.add("active");
+            }
+        });
+    }
 }
