@@ -1,14 +1,16 @@
 "use strict";
 
+const ONE_FRAME_TIME = 10;
+const PAUSE_ON_ESC = true;
 const ZumaConfig_1 = {
     colorList: [
         "#ab092c",
         "#bfb60a",
         "#0c7526",
     ],
-    moveSpeed: 8,
-    countMarbles: 125,
-    initMarbles: 5,
+    moveSpeed: 10,
+    countMarbles: 150,
+    initMarbles: 6,
 };
 const ZumaConfig_2 = {
     colorList: [
@@ -16,8 +18,8 @@ const ZumaConfig_2 = {
         "#bfb60a",
         "#0c7526",
     ],
-    moveSpeed: 8,
-    countMarbles: 200,
+    moveSpeed: 5,
+    countMarbles: 300,
     initMarbles: 10,
 };
 const ZumaConfig_3 = {
@@ -27,8 +29,8 @@ const ZumaConfig_3 = {
         "#0c7526",
         "#093799",
     ],
-    moveSpeed: 4,
-    countMarbles: 275,
+    moveSpeed: 5,
+    countMarbles: 500,
     initMarbles: 15,
 };
 const ZumaConfig_4 = {
@@ -39,13 +41,11 @@ const ZumaConfig_4 = {
         "#ABD8CE",
         "#E4C5AF"
     ],
-    moveSpeed: 4,
-    countMarbles: 999,
+    moveSpeed: 5,
+    countMarbles: 1000,
     initMarbles: 20,
 };
 let ZumaConfig = JSON.parse(JSON.stringify(ZumaConfig_1));
-const ONE_FRAME_TIME = 10;
-const PAUSE_ON_ESC = false;
 
 class FastMath {
     _cache = [];
@@ -74,16 +74,16 @@ class FastMath {
         v = parseInt(v*100)/100;
         return this.getFromCache('cos', v);
     }
-    atan2(y, x) {
-        x = parseInt(x*100)/100;
-        y = parseInt(y*100)/100;
-        const func = 'atan2';
-        const v = y + '_' + x;
-        if (!this._cache[func][v]) {
-            this._cache[func][v] = Math.atan2(y, x);
-        }
-        return this._cache[func][v];
-    }
+    // atan2(y, x) {
+    //     x = parseInt(x*100)/100;
+    //     y = parseInt(y*100)/100;
+    //     const func = 'atan2';
+    //     const v = y + '_' + x;
+    //     if (!this._cache[func][v]) {
+    //         this._cache[func][v] = Math.atan2(y, x);
+    //     }
+    //     return this._cache[func][v];
+    // }
     abs(v) {
         v = parseInt(v);
         return this.getFromCache('abs', v);
@@ -94,7 +94,6 @@ class FastMath {
     }
 }
 const fastMath = new FastMath();
-const domActions = [];
 
 class FastArray_arrayBased {
     constructor() {
@@ -125,7 +124,6 @@ class FastArray_arrayBased {
         return this._array.unshift(obj);
     }
 }
-
 class FastArray_listNodesBased {
     constructor() {
         this._array = { start: null };
@@ -148,8 +146,23 @@ class FastArray_listNodesBased {
         return i;
     }
     at(index) {
+        if (this.atCache_lastIndex && this.atCache_lastIndex < index) {
+            let elem = this.atCache_lastElement;
+            for (let i = this.atCache_lastIndex; i < index; i++) {
+                this.atCache_lastIndex = i;
+                this.atCache_lastElement = elem;
+                elem = elem ? elem.next : null;
+                if (!elem) {
+                    break;
+                }
+            }
+            return elem ? elem.value : null;
+        }
+
         let elem = this._array.start;
         for (let i = 0; i < index; i++) {
+            this.atCache_lastIndex = i;
+            this.atCache_lastElement = elem;
             elem = elem ? elem.next : null;
             if (!elem) {
                 break;
@@ -215,8 +228,20 @@ class FastArray_listNodesBased {
         }
     }
     insert(index, value) {
+        if (index < 0) {
+            value.marble.remove();
+            return;
+        }
+
         let i = 0;
         let elem = this._array.start;
+        if (index === 0) {
+            this._array.start = {
+                next: this._array.start,
+                value
+            };
+            return;
+        }
         while (elem) {
             if (i === index) {
                 elem.next = {next: elem.next, value};
@@ -225,6 +250,7 @@ class FastArray_listNodesBased {
             elem = elem.next;
             i++;
         }
+        // return this._array.splice(index, 0, newValue);
     }
     unshift(value) {
         this._array.start = {
@@ -263,7 +289,6 @@ class FastArray_listNodesBased {
         console.log(lines.join(', '));
     }
 }
-
 class FastArray extends FastArray_listNodesBased {}
 
 const createDiv = (classList, children = []) => {
@@ -284,6 +309,8 @@ const createElementNS = (name, attr) => {
 };
 
 class Marble {
+    static Size = 60;
+
     constructor({color = `#ff2244`}) {
         this.ID = `${(~~(Math.random() * 1e9)).toString(16).toLocaleUpperCase()}`;
         this.DOM = createDiv(["marble"]);
@@ -294,25 +321,17 @@ class Marble {
     }
 
     setPosition(x, y) {
-        this.x = parseInt(x * 100)/100;
-        this.y = parseInt(y * 100)/100;
+        this.x = x;
+        this.y = y;
         if (this.DOM) {
-            const func = () => {
-                this.DOM.style.transform = `translate(calc(${this.x}px - 50%), calc(${this.y}px - 50%))`;
-            };
-            if (zumaGame.isAlreadyRun) {
-                domActions.push(func);
-            } else {
-                func();
-            }
-
+            this.DOM.style.transform = `translate(calc(${this.x}px - 50%), calc(${this.y}px - 50%))`;
         }
         return this;
     }
 
     appendTo(parent) {
-        this.parent = parent;
         parent.appendChild(this.DOM);
+        this.parent = parent;
         return this;
     }
 
@@ -329,8 +348,6 @@ class Marble {
         return Marble.Size - fastMath.sqrt((this.x - marble.x) ** 2 + (this.y - marble.y) ** 2);
     }
 }
-
-Marble.Size = 60;
 
 class Player {
     constructor({x = 0, y = 0}) {
@@ -355,7 +372,7 @@ class Player {
         const rect = this.DOM.getBoundingClientRect();
         const innerX = rect.left + (rect.right - rect.left) / 2;
         const innerY = rect.top + (rect.bottom - rect.top) / 2;
-        this.rotate = (fastMath.atan2(this.lookY - innerY, this.lookX - innerX) * 180) / Math.PI + 90 - 90; // CSS FIX
+        this.rotate = Math.atan2(this.lookY - innerY, this.lookX - innerX) * 180 / Math.PI;// + 90 - 90; // CSS FIX
         this.DOM.style.transform = `translate(calc(${this.X}px - 50%), calc(${this.Y}px - 50%)) rotate(${this.rotate}deg)`;
         return this;
     }
@@ -388,7 +405,7 @@ class Player {
 }
 
 class Zuma {
-    myGameInit() {
+    reInit() {
         this.AllMarbleLength = ZumaConfig.countMarbles;
         this.InitMarbleLength = ZumaConfig.initMarbles;
         this.moveSpeed = ZumaConfig.moveSpeed;
@@ -482,7 +499,7 @@ class Zuma {
     }
 
     start() {
-        this.myGameInit();
+        this.reInit();
         return this.continue();
     }
 
@@ -502,7 +519,7 @@ class Zuma {
     }
 
     reset() {
-        this.myGameInit();
+        this.reInit();
         this.isStart = false;
         this._isInit = false;
         this.isFinal = false;
@@ -600,7 +617,7 @@ class Zuma {
                 if (this.checkDeleteAfterTouchData[marbleData.marble.ID]) {
                     delete this.checkDeleteAfterTouchData[marbleData.marble.ID];
                     if (marbleData.marble.Color === prevMarble.marble.Color) {
-                        const list = this.getNeerSameMarble(marbleData.marble);
+                        const list = this.getNearSameMarble(marbleData.marble);
                         if (list.length >= 3) {
                             deleteList.push(...list);
                         }
@@ -641,7 +658,7 @@ class Zuma {
                 const overlap = data.marble.overlap(marbleData.marble);
                 if (overlap > 5) {
                     if (data.marble.Color === marbleData.marble.Color) {
-                        const sameList = this.getNeerSameMarble(marbleData.marble);
+                        const sameList = this.getNearSameMarble(marbleData.marble);
                         if (sameList.length >= 2) {
                             this.score += sameList.length;
                             sameList.forEach((marble) => {
@@ -728,17 +745,17 @@ class Zuma {
         return this.getColor();
     }
 
-    getNeerSameMarble(marble) {
+    getNearSameMarble(marble) {
         let checkMarble;
         const index = this.marbleDataList.findByID(marble.ID);
-        const neerList = [marble];
+        const nearList = [marble];
         checkMarble = marble;
         for (let i = index + 1; i < this.marbleDataList.length(); i++) {
             const nowMarble = this.marbleDataList.at(i).marble;
             if (nowMarble.Color === checkMarble.Color &&
                 nowMarble.overlap(checkMarble) > Marble.Size / -10) {
                 checkMarble = nowMarble;
-                neerList.push(nowMarble);
+                nearList.push(nowMarble);
             } else {
                 break;
             }
@@ -749,21 +766,15 @@ class Zuma {
             if (nowMarble.Color === checkMarble.Color &&
                 nowMarble.overlap(checkMarble) > Marble.Size / -10) {
                 checkMarble = nowMarble;
-                neerList.push(nowMarble);
+                nearList.push(nowMarble);
             } else {
                 break;
             }
         }
-        return neerList;
+        return nearList;
     }
 
     animation() {
-        if (this.isAlreadyRun) {
-            return;
-        }
-
-        const my_start = +Date.now();
-
         if (!this.isStart) {
             return;
         }
@@ -774,12 +785,16 @@ class Zuma {
             this.init().moveMoveMarbleData();
             return;
         }
+
         const innerTime = new Date().getTime();
+        document.getElementById('fps-value').innerHTML = parseInt( 1000 / (innerTime-this.time) );
         if (innerTime - this.time < ONE_FRAME_TIME) {
+            console.log('Too early');
             return;
         }
-        this.isAlreadyRun = true;
+
         this.time = innerTime;
+
         if (this.moveTimes === this.moveSpeed &&
             this.autoAddMarbleCount < this.AllMarbleLength) {
             this.unshiftMarble();
@@ -787,13 +802,10 @@ class Zuma {
         }
         this.moveMoveMarbleBoom();
         this.moveMoveMarbleData();
-        domActions.forEach(func => func());
-        domActions.length = 0;
         this.moveTimes++;
         if (this.marbleDataList.length() === 0) {
             this.isFinal = true;
         }
-        this.isAlreadyRun = false;
     }
 
     bindEvent() {
@@ -848,10 +860,7 @@ export function InitGame2() {
     const finalNum = finalPopup.querySelector(".num");
     const calcScaleW = parseInt(document.body.clientWidth*100/880) / 100;
     const calcScaleH = parseInt(document.body.clientHeight*100/1200) / 100;
-    console.log('calcScaleW:', calcScaleW);
-    console.log('calcScaleH:', calcScaleH);
     const calcScale = Math.min(calcScaleW, calcScaleH);
-    console.log('calcScale:', calcScale);
     zumaGame = new Zuma({
         width: 1200,
         height: 880,

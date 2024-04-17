@@ -4,6 +4,10 @@
     <button type="button" class="button button-pause">
       <i class="bi bi-pause-fill"></i>
     </button>
+    <div id="fps">
+      <div class="fps-label">FPS</div>
+      <div id="fps-value">0</div>
+    </div>
     <div class="shadow"></div>
     <div id="score" class="score">
       <div class="title">Счёт</div>
@@ -11,7 +15,7 @@
     </div>
     <div class="popup-container">
       <div id="start" class="popup active">
-        <div class="title">Начнём</div>
+        <div class="title">Начнём?</div>
         <div class="info">
           <p>Выберите уровень сложности:</p>
         </div>
@@ -48,7 +52,7 @@
         </div>
       </div>
       <div id="final" class="popup">
-        <div class="title">Счёт:</div>
+        <div class="title">Счёт</div>
         <div class="info">
           <span class="num"></span>
           <div>Сложность: {{ difficultyName }}</div>
@@ -70,7 +74,8 @@ import { InitGame2 } from "@/libraries/game-n2";
 export default {
   data() {
     return {
-      difficultyName: ''
+      difficultyName: '',
+      COUNT_BALLS: 500
     }
   },
   mounted() {
@@ -83,6 +88,28 @@ export default {
 body {
   padding: 0;
   margin: 0;
+}
+
+#fps {
+  background: red;
+  position: absolute;
+  right: 13px;
+  top: 13px;
+  font-size: 30px;
+  color: #FFF;
+  z-index: 999;
+  border-radius: 50%;
+  width: 70px;
+  height: 70px;
+  overflow: hidden;
+  text-align: center;
+  padding-top: 11px !important;
+
+  .fps-label {
+    font-size: 11px;
+    padding-bottom: 3px;
+    text-align: center;
+  }
 }
 
 #game-n-2-like-body {
@@ -117,15 +144,16 @@ body {
 
   .button-pause {
     color: #FFF;
-    background: rgba(0, 0, 0, 0.65);
+    background: #01181e;
     width: 70px;
     height: 70px;
     position: absolute;
-    left: 10px;
-    top: 10px;
+    left: 13px;
+    top: 13px;
     z-index: 99;
     font-size: 35px;
     border-radius: 50%;
+    box-shadow: 0 0 25px rgba(0, 0, 0, 0.5);
   }
 
   #menu,
@@ -170,7 +198,7 @@ body {
     display: block;
     width: 1287.709px;
     height: 1004.262px;
-    background-image: url("@/assets/images/bg-leaf.svg");
+    //background-image: url("@/assets/images/bg-leaf.svg");
     position: absolute;
     top: -55px;
     left: -80px;
@@ -183,7 +211,7 @@ body {
   .container2 .leaf-01 {
     width: 290.296px;
     height: 197.981px;
-    /*background-image: url("./../image/leaf-01.svg");*/
+    background-image: url("@/assets/images/leaf-01.svg");
     transform-origin: top left;
     top: -10px;
     left: -50px;
@@ -192,7 +220,7 @@ body {
   .container2 .leaf-02 {
     width: 130.828px;
     height: 131.056px;
-    /*background-image: url("./../image/leaf-02.svg");*/
+    background-image: url("@/assets/images/leaf-02.svg");
     transform-origin: top right;
     top: -60px;
     right: 325px;
@@ -201,7 +229,7 @@ body {
   .container2 .leaf-03 {
     width: 214.618px;
     height: 225.252px;
-    /*background-image: url("./../image/leaf-03.svg");*/
+    background-image: url("@/assets/images/leaf-03.svg");
     transform-origin: top right;
     top: 60px;
     right: -60px;
@@ -352,8 +380,8 @@ body {
 
   .score {
     position: absolute;
-    bottom: 15px;
-    right: 15px;
+    bottom: 12px;
+    right: 18px;
     color: #fff;
     text-align: right;
   }
