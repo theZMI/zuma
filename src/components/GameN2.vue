@@ -18,7 +18,8 @@
         <div class="button-container">
           <div @click="difficultyName='Легко'" class="button button-difficulty-1 mb-15">Легко</div>
           <div @click="difficultyName='Нормально'" class="button button-difficulty-2 mb-15">Нормально</div>
-          <div @click="difficultyName='Трудно'" class="button button-difficulty-3">Трудно</div>
+          <div @click="difficultyName='Трудно'" class="button button-difficulty-3 mb-15">Трудно</div>
+          <div @click="difficultyName='Нереально'" class="button button-difficulty-4">Нереально</div>
         </div>
       </div>
       <div id="stop" class="popup">
@@ -59,7 +60,6 @@
       <div class="mask"></div>
     </div>
     <div id="game-n-2-like-body"></div>
-    <div style="background: #000; color: #FFF; position: fixed; bottom: 0; left: 0; width: 100%; padding: 15px; font-size: 12px; text-align: left; height: 100px;" id="my-console"></div>
     <!-- /Game -->
   </div>
 </template>
@@ -86,21 +86,19 @@ body {
 }
 
 #game-n-2-like-body {
-  rotate: 90deg;
-  scale: 0.66;
-  margin-top: 0 !important;
-  height: fit-content;
+  min-width: 100vw;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 #game-n-2 {
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   width: 100vw;
   height: 100vh;
   background-image: radial-gradient(circle at center, #002129, #000);
   overflow: hidden;
+  line-height: 1;
   //font-family: "Josefin Sans", sans-serif;
   font-family: 'PT Sans', sans-serif;
   position: relative;
@@ -158,11 +156,16 @@ body {
     margin-bottom: 15px;
   }
 
-  .container {
-    position: relative;
+  .container2 {
+    max-width: unset !important;
+    rotate: 90deg;
     background-image: url("@/assets/images/bg.svg");
+    transform-origin: center center;
+    position: absolute;
+    left: calc(50% - 600px);
+    top: calc(50% - 440px);
   }
-  .container::before {
+  .container2::before {
     content: "";
     display: block;
     width: 1287.709px;
@@ -172,12 +175,12 @@ body {
     top: -55px;
     left: -80px;
   }
-  .container .leaf {
+  .container2 .leaf {
     position: absolute;
     z-index: 10;
     opacity: 0.33;
   }
-  .container .leaf-01 {
+  .container2 .leaf-01 {
     width: 290.296px;
     height: 197.981px;
     /*background-image: url("./../image/leaf-01.svg");*/
@@ -186,7 +189,7 @@ body {
     left: -50px;
     animation: leaf 8s -2s infinite;
   }
-  .container .leaf-02 {
+  .container2 .leaf-02 {
     width: 130.828px;
     height: 131.056px;
     /*background-image: url("./../image/leaf-02.svg");*/
@@ -195,7 +198,7 @@ body {
     right: 325px;
     animation: leaf 10s -3s infinite;
   }
-  .container .leaf-03 {
+  .container2 .leaf-03 {
     width: 214.618px;
     height: 225.252px;
     /*background-image: url("./../image/leaf-03.svg");*/
@@ -204,7 +207,7 @@ body {
     right: -60px;
     animation: leaf 5s -2s infinite;
   }
-  .container .leaf-04 {
+  .container2 .leaf-04 {
     width: 303.2px;
     height: 356.908px;
     background-image: url("@/assets/images/leaf-04.svg");
@@ -213,7 +216,7 @@ body {
     left: 0px;
     animation: leaf 7s -1s infinite;
   }
-  .container .leaf-05 {
+  .container2 .leaf-05 {
     width: 253.153px;
     height: 292.861px;
     background-image: url("@/assets/images/leaf-05.svg");
@@ -222,7 +225,7 @@ body {
     right: 660px;
     animation: leaf 9s -3s infinite;
   }
-  .container .leaf-06 {
+  .container2 .leaf-06 {
     width: 269.787px;
     height: 346.454px;
     background-image: url("@/assets/images/leaf-06.svg");
@@ -231,11 +234,11 @@ body {
     right: -40px;
     animation: leaf 15s -5s infinite;
   }
-  .container svg {
+  .container2 svg {
     opacity: 0;
     pointer-events: none;
   }
-  .container .player {
+  .container2 .player {
     width: 175px;
     height: 175px;
     position: absolute;
@@ -243,7 +246,7 @@ body {
     left: 0;
     z-index: 11;
   }
-  .container .player::before {
+  .container2 .player::before {
     content: "";
     display: block;
     width: 2px;
@@ -255,7 +258,7 @@ body {
     background-image: linear-gradient(rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.5));
     z-index: 1;
   }
-  .container .player::after {
+  .container2 .player::after {
     content: "";
     display: block;
     width: 100%;
@@ -265,12 +268,12 @@ body {
     background-image: url("@/assets/images/frog.svg");
     z-index: 2;
   }
-  .container .player .marble-1,
-  .container .player .marble-2 {
+  .container2 .player .marble-1,
+  .container2 .player .marble-2 {
     position: absolute;
     z-index: 3;
   }
-  .container .player .marble-1 {
+  .container2 .player .marble-1 {
     width: 60px;
     height: 60px;
     border-radius: 100px;
@@ -278,28 +281,28 @@ body {
     left: 50%;
     transform: translateX(-50%);
   }
-  .container .player .marble-2 {
+  .container2 .player .marble-2 {
     width: 20px;
     height: 20px;
     border-radius: 100px;
     left: 50%;
     border: solid 5px #83be7c;
   }
-  .container .player .marble-2:nth-child(2) {
+  .container2 .player .marble-2:nth-child(2) {
     top: 85px;
     transform: translateX(calc(-50% - 30px));
   }
-  .container .player .marble-2:nth-child(3) {
+  .container2 .player .marble-2:nth-child(3) {
     width: 25px;
     height: 25px;
     top: 105px;
     transform: translateX(-50%);
   }
-  .container .player .marble-2:nth-child(4) {
+  .container2 .player .marble-2:nth-child(4) {
     top: 85px;
     transform: translateX(calc(-50% + 30px));
   }
-  .container .start-hole {
+  .container2 .start-hole {
     width: 100px;
     height: 100px;
     border-radius: 100px;
@@ -307,7 +310,7 @@ body {
     position: absolute;
     transform: translate(-50%, -50%);
   }
-  .container .final-hole {
+  .container2 .final-hole {
     width: 100px;
     height: 100px;
     border-radius: 100px;

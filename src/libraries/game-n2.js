@@ -3,25 +3,35 @@
 const ZumaConfig_1 = {
     colorList: [
         "#ab092c",
+        "#bfb60a",
         "#0c7526",
-        "#093799"
     ],
-    moveSpeed: 4,
-    countMarbles: 999,
-    initMarbles: 7,
+    moveSpeed: 8,
+    countMarbles: 125,
+    initMarbles: 5,
 };
 const ZumaConfig_2 = {
     colorList: [
         "#ab092c",
-        "#0c7526",
-        "#093799",
         "#bfb60a",
+        "#0c7526",
     ],
     moveSpeed: 8,
-    countMarbles: 999,
+    countMarbles: 200,
     initMarbles: 10,
 };
 const ZumaConfig_3 = {
+    colorList: [
+        "#ab092c",
+        "#bfb60a",
+        "#0c7526",
+        "#093799",
+    ],
+    moveSpeed: 4,
+    countMarbles: 275,
+    initMarbles: 15,
+};
+const ZumaConfig_4 = {
     colorList: [
         "#0C3406",
         "#077187",
@@ -29,9 +39,9 @@ const ZumaConfig_3 = {
         "#ABD8CE",
         "#E4C5AF"
     ],
-    moveSpeed: 8,
-    countMarbles: 200,
-    initMarbles: 56,//20,
+    moveSpeed: 4,
+    countMarbles: 999,
+    initMarbles: 20,
 };
 let ZumaConfig = JSON.parse(JSON.stringify(ZumaConfig_1));
 const ONE_FRAME_TIME = 10;
@@ -85,6 +95,176 @@ class FastMath {
 }
 const fastMath = new FastMath();
 const domActions = [];
+
+class FastArray_arrayBased {
+    constructor() {
+        this._array = new Array(999).fill(null);
+        this._array.length = 0;
+    }
+
+    reset() {
+        this._array.forEach(d => d.marble.remove());
+        this._array.length = 0;
+    }
+    length() {
+        return this._array.length;
+    }
+    at(index) {
+        return this._array[index];
+    }
+    findByID(id) {
+        return this._array.findIndex(d => d.marble.ID === id);
+    }
+    remove(index) {
+        return this._array.splice(index, 1);
+    }
+    insert(index, newValue) {
+        return this._array.splice(index, 0, newValue);
+    }
+    unshift(obj) {
+        return this._array.unshift(obj);
+    }
+}
+
+class FastArray_listNodesBased {
+    constructor() {
+        this._array = { start: null };
+    }
+    reset() {
+        let elem = this._array.start;
+        while (elem) {
+            elem.value.marble.remove();
+            elem = elem.next;
+        }
+        this._array.start = null;
+    }
+    length() {
+        let i = 0;
+        let elem = this._array.start;
+        while (elem) {
+            i++;
+            elem = elem.next;
+        }
+        return i;
+    }
+    at(index) {
+        let elem = this._array.start;
+        for (let i = 0; i < index; i++) {
+            elem = elem ? elem.next : null;
+            if (!elem) {
+                break;
+            }
+        }
+        return elem ? elem.value : null;
+    }
+    findByValue(value) {
+        let elem = this._array.start;
+        let i = 0;
+        let foundPos = null;
+        do {
+            if (elem.value === value) {
+                foundPos = i;
+                break;
+            }
+            i++;
+            elem = elem ? elem.next : elem;
+        } while (elem);
+        return foundPos;
+    }
+    findByID(id) {
+        let elem = this._array.start;
+        let i = 0;
+        let foundPos = -1;
+        do {
+            if (elem.value.marble.ID === id) {
+                foundPos = i;
+                break;
+            }
+            i++;
+            elem = elem ? elem.next : elem;
+        } while (elem);
+        return foundPos;
+    }
+    remove(index) {
+        let i = 0;
+        let prevElem = this._array.start;
+        while (prevElem) {
+            if (index === 0) {
+                this._array.start = this._array.start.next;
+                break;
+            }
+            if (i === index-1) {
+                let needDeleteElem = prevElem.next;
+                prevElem.next = needDeleteElem.next;
+                break;
+            }
+            prevElem = prevElem.next;
+            i++;
+        }
+    }
+    replace(index, newValue) {
+        let i = 0;
+        let elem = this._array.start;
+        while (elem) {
+            if (i === index) {
+                elem.value = newValue;
+                break;
+            }
+            elem = elem.next;
+            i++;
+        }
+    }
+    insert(index, value) {
+        let i = 0;
+        let elem = this._array.start;
+        while (elem) {
+            if (i === index) {
+                elem.next = {next: elem.next, value};
+                break;
+            }
+            elem = elem.next;
+            i++;
+        }
+    }
+    unshift(value) {
+        this._array.start = {
+            next: this._array.start,
+            value
+        };
+    }
+    add(value) {
+        if (!this._array.start) {
+            this._array.start = {
+                next: null,
+                value
+            }
+            return;
+        }
+
+        let elem = this._array.start;
+        while (elem) {
+            if (!elem.next) {
+                break;
+            }
+            elem = elem.next;
+        }
+        elem.next = {
+            next: null,
+            value
+        }
+    }
+    print() {
+        let elem = this._array.start;
+        let lines = [];
+        while (elem) {
+            lines.push(elem.value.marble.ID);
+            elem = elem.next;
+        }
+        console.log(lines.join(', '));
+    }
+}
+
+class FastArray extends FastArray_listNodesBased {}
 
 const createDiv = (classList, children = []) => {
     const div = document.createElement("div");
@@ -222,7 +402,7 @@ class Zuma {
     }
 
     constructor(data) {
-        this.Container = createDiv(["container"], [
+        this.Container = createDiv(["container2"], [
             createDiv(["leaf", "leaf-01"]),
             createDiv(["leaf", "leaf-02"]),
             createDiv(["leaf", "leaf-03"]),
@@ -233,10 +413,7 @@ class Zuma {
         this.Path = createElementNS("path", {});
 
         this.autoAddMarbleCount = 0;
-        this.marbleDataList = [];
-        // for (let i = 0; i < this.AllMarbleLength; i++) {
-        //     this.marbleDataList.push(null);
-        // }
+        this.marbleDataList = new FastArray();
 
         this.marbleBoomList = [];
         this.marbleColorCount = {};
@@ -331,9 +508,8 @@ class Zuma {
         this.isFinal = false;
         this.autoAddMarbleCount = 0;
         this.score = 0;
-        this.marbleDataList.forEach((d) => d.marble.remove());
+        this.marbleDataList.reset();
         this.marbleBoomList.forEach((d) => d.marble.remove());
-        this.marbleDataList.length = 0;
         this.marbleBoomList.length = 0;
         this.checkDeleteAfterTouchData = {};
         this.playerMarble.now = null;
@@ -379,14 +555,13 @@ class Zuma {
 
     init() {
         const innerTime = new Date().getTime();
-        if (this.marbleDataList.length >= this.InitMarbleLength && this.isStart) {
+        if (this.marbleDataList.length() >= this.InitMarbleLength && this.isStart) {
             this._isInit = true;
             this.moveSpeed = ZumaConfig.moveSpeed * 5;
             this.moveTimes = this.moveSpeed;
             this.playerMarble.now = this.createMarble();
             this.playerMarble.next = this.createMarble();
             this.Player.setMarbleColor(this.playerMarble.now.Color).setNextMarbleColor(this.playerMarble.next.Color);
-            console.log('this.marbleDataList=', this.marbleDataList);
             return this;
         }
         if (innerTime - this.time < ONE_FRAME_TIME * 5) {
@@ -399,7 +574,7 @@ class Zuma {
 
     moveMoveMarbleData() {
         const percent = 0.99;
-        const firstMarble = this.marbleDataList[0];
+        const firstMarble = this.marbleDataList.at(0);
         if (!firstMarble) {
             return;
         }
@@ -413,8 +588,8 @@ class Zuma {
         firstMarble.marble.setPosition(pos.x, pos.y);
         let prevMarble = firstMarble;
         const deleteList = [];
-        for (let i = 1; i < this.marbleDataList.length; i++) {
-            const marbleData = this.marbleDataList[i];
+        for (let i = 1; i < this.marbleDataList.length(); i++) {
+            const marbleData = this.marbleDataList.at(i);
             if (marbleData.percent >= percent) {
                 this.score -= 1;
                 this.removeMarbleFromDataList(marbleData.marble, i);
@@ -461,8 +636,8 @@ class Zuma {
         const deleteData = [];
         this.marbleBoomList.forEach((data) => {
             data.marble.setPosition(data.marble.x + data.speed.x, data.marble.y + data.speed.y);
-            for (let i = 0; i < marbleDataList.length; i++) {
-                const marbleData = marbleDataList[i];
+            for (let i = 0; i < marbleDataList.length(); i++) {
+                const marbleData = marbleDataList.at(i);
                 const overlap = data.marble.overlap(marbleData.marble);
                 if (overlap > 5) {
                     if (data.marble.Color === marbleData.marble.Color) {
@@ -496,27 +671,27 @@ class Zuma {
         });
     }
 
-    removeMarbleFromDataList(marble, index = this.marbleDataList.findIndex((d) => d.marble.ID === marble.ID)) {
+    removeMarbleFromDataList(marble, index = this.marbleDataList.findByID(marble.ID)) {
         delete this.checkDeleteAfterTouchData[marble.ID];
-        this.marbleDataList[index].marble.remove();
-        this.marbleDataList.splice(index, 1);
+        this.marbleDataList.at(index).marble.remove();
+        this.marbleDataList.remove(index);
         this.marbleColorCount[marble.Color]--;
         return this;
     }
 
     addMarbleToNeer(marble, target) {
-        const index = this.marbleDataList.findIndex((d) => d.marble.ID === target.marble.ID);
+        const index = this.marbleDataList.findByID(target.marble.ID);
         const prevPos = this.Path.getPointAtLength((target.percent - Marble.Size / this.PathLength) * this.PathLength);
         const nextPos = this.Path.getPointAtLength((target.percent + Marble.Size / this.PathLength) * this.PathLength);
         const prevGap = (prevPos.x - marble.x) ** 2 + (prevPos.y - marble.y) ** 2;
         const nextGap = (nextPos.x - marble.x) ** 2 + (nextPos.y - marble.y) ** 2;
         if (prevGap < nextGap) {
-            this.marbleDataList.splice(index - 1, 0, {
+            this.marbleDataList.insert(index - 1, {
                 marble,
                 percent: target.percent - Marble.Size / this.PathLength / 2
             });
         } else {
-            this.marbleDataList.splice(index, 0, {
+            this.marbleDataList.insert(index, {
                 marble,
                 percent: target.percent + Marble.Size / this.PathLength / 2
             });
@@ -555,11 +730,11 @@ class Zuma {
 
     getNeerSameMarble(marble) {
         let checkMarble;
-        const index = this.marbleDataList.findIndex((ele) => ele.marble.ID === marble.ID);
+        const index = this.marbleDataList.findByID(marble.ID);
         const neerList = [marble];
         checkMarble = marble;
-        for (let i = index + 1; i < this.marbleDataList.length; i++) {
-            const nowMarble = this.marbleDataList[i].marble;
+        for (let i = index + 1; i < this.marbleDataList.length(); i++) {
+            const nowMarble = this.marbleDataList.at(i).marble;
             if (nowMarble.Color === checkMarble.Color &&
                 nowMarble.overlap(checkMarble) > Marble.Size / -10) {
                 checkMarble = nowMarble;
@@ -570,7 +745,7 @@ class Zuma {
         }
         checkMarble = marble;
         for (let i = index - 1; i >= 0; i--) {
-            const nowMarble = this.marbleDataList[i].marble;
+            const nowMarble = this.marbleDataList.at(i).marble;
             if (nowMarble.Color === checkMarble.Color &&
                 nowMarble.overlap(checkMarble) > Marble.Size / -10) {
                 checkMarble = nowMarble;
@@ -583,7 +758,6 @@ class Zuma {
     }
 
     animation() {
-        console.log('me call');
         if (this.isAlreadyRun) {
             return;
         }
@@ -604,8 +778,6 @@ class Zuma {
         if (innerTime - this.time < ONE_FRAME_TIME) {
             return;
         }
-        console.log('MARBLES: ', this.marbleDataList.length);
-        // console.log('my_start:', my_start);
         this.isAlreadyRun = true;
         this.time = innerTime;
         if (this.moveTimes === this.moveSpeed &&
@@ -614,26 +786,13 @@ class Zuma {
             this.moveTimes = 0;
         }
         this.moveMoveMarbleBoom();
-        const my_part_1 = +Date.now();
         this.moveMoveMarbleData();
-        domActions.forEach(func => {
-            func();
-        });
+        domActions.forEach(func => func());
         domActions.length = 0;
-        const my_part_2 = +Date.now();
         this.moveTimes++;
-        if (this.marbleDataList.length === 0) {
+        if (this.marbleDataList.length() === 0) {
             this.isFinal = true;
         }
-        // console.log('my_exec:', +Date.now() - my_start);
-        const my_end = +Date.now();
-        const exec_time = my_end - my_start;
-        const exec_part_1 = my_part_1 - my_start;
-        const exec_part_2 = my_part_2 - my_part_1;
-        const execInfo = '<div style="width: 100px; display: inline-block;">'
-            +`${exec_time} = (${exec_part_1} + ${exec_part_2})`
-            + '</div>';
-        document.getElementById('my-console').innerHTML = execInfo + document.getElementById('my-console').innerHTML;
         this.isAlreadyRun = false;
     }
 
@@ -687,10 +846,16 @@ export function InitGame2() {
     const stopPopup = document.body.querySelector("#game-n-2 #stop");
     const finalPopup = document.body.querySelector("#game-n-2 #final");
     const finalNum = finalPopup.querySelector(".num");
+    const calcScaleW = parseInt(document.body.clientWidth*100/880) / 100;
+    const calcScaleH = parseInt(document.body.clientHeight*100/1200) / 100;
+    console.log('calcScaleW:', calcScaleW);
+    console.log('calcScaleH:', calcScaleH);
+    const calcScale = Math.min(calcScaleW, calcScaleH);
+    console.log('calcScale:', calcScale);
     zumaGame = new Zuma({
         width: 1200,
         height: 880,
-        scale: 0.7,
+        scale: calcScale,
         path: `M235.5-36.5c0,0-129,157.858-143,381.918c-6.6,105.632,47,236.043,159,295.679s338.566,101.881,547,64.404
     c199-35.781,312.016-164.676,313-266c1-103-34-221.816-200-278.044c-142.542-48.282-346.846-37.455-471,31.044
     c-116,64-154.263,213.533-81,304.619c92,114.381,410,116.381,476,2.891c62.975-108.289-40-203.51-158-206.51`,
@@ -719,6 +884,11 @@ export function InitGame2() {
     });
     startPopup.querySelector(".button-difficulty-3").addEventListener("click", () => {
         ZumaConfig = JSON.parse(JSON.stringify(ZumaConfig_3));
+        startPopup.classList.remove("active");
+        zumaGame.start();
+    });
+    startPopup.querySelector(".button-difficulty-4").addEventListener("click", () => {
+        ZumaConfig = JSON.parse(JSON.stringify(ZumaConfig_4));
         startPopup.classList.remove("active");
         zumaGame.start();
     });
