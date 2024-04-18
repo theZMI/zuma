@@ -858,13 +858,15 @@ export function InitGame2() {
     const stopPopup = document.body.querySelector("#game-n-2 #stop");
     const finalPopup = document.body.querySelector("#game-n-2 #final");
     const finalNum = finalPopup.querySelector(".num");
-    const calcScaleW = parseInt(document.body.clientWidth*100/880) / 100;
-    const calcScaleH = parseInt(document.body.clientHeight*100/1200) / 100;
-    const calcScale = Math.min(calcScaleW, calcScaleH);
+    const calcScale = () => {
+        const w = parseInt(document.body.clientWidth*100/880) / 100;
+        const h = parseInt(document.body.clientHeight*100/1200) / 100;
+        return Math.min(w, h);
+    }
     zumaGame = new Zuma({
         width: 1200,
         height: 880,
-        scale: calcScale,
+        scale: calcScale(),
         path: `M235.5-36.5c0,0-129,157.858-143,381.918c-6.6,105.632,47,236.043,159,295.679s338.566,101.881,547,64.404
     c199-35.781,312.016-164.676,313-266c1-103-34-221.816-200-278.044c-142.542-48.282-346.846-37.455-471,31.044
     c-116,64-154.263,213.533-81,304.619c92,114.381,410,116.381,476,2.891c62.975-108.289-40-203.51-158-206.51`,
